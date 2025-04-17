@@ -1,0 +1,18 @@
+langchain>=0.1.0,<0.2.0
+langchain-groq>=0.1.3
+langchain-community>=0.0.30
+langgraph>=0.0.45
+chromadb>=0.4.24,<0.5.0
+langchainhub>=0.1.15
+streamlit>=1.32.0
+python-dotenv>=1.0.1
+pypdf>=4.0.0
+tiktoken>=0.6.0
+langsmith>=0.1.50
+openai>=1.0.0
+sentence-transformers>=2.6.0
+pandas>=2.0.0
+# Choose ONE search tool library based on .env setting:
+tavily-python>=0.3.3
+# google-search-results>=2.4.2
+# langchain-bing-search # For Bing (might require specific setup)

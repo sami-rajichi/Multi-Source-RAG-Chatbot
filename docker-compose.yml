@@ -1,0 +1,22 @@
+services:
+  rag-chatbot:
+    build: .
+    container_name: scalex-rag-chatbot
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      - ./data:/app/data  # Persist uploaded files
+      - chroma_db:/app/chroma_db  # Persist chroma_db (vectorstore)
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  chroma_db:
