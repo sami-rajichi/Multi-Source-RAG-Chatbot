@@ -12,6 +12,7 @@ langsmith>=0.1.50
 openai>=1.0.0
 sentence-transformers>=2.6.0
 pandas>=2.0.0
+hf_xet
 # Choose ONE search tool library based on .env setting:
 tavily-python>=0.3.3
 # google-search-results>=2.4.2
