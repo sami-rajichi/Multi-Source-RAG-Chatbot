@@ -34,10 +34,6 @@ AVAILABLE_GROQ_MODELS = [
     "qwen-qwq-32b",
     "qwen-2.5-32b",
     "deepseek-r1-distill-llama-70b",
-    "mixtral-8x7b-32768",
-    "llama3-70b-8192",
-    "llama3-8b-8192",
-    "gemma-7b-it",
 ]
 
 MODE_OPTIONS = ["Dynamic (Default)", "LLM Native Only", "Vectorstore Only", "Web Search Only"]
@@ -256,7 +252,7 @@ def main():
                                 get_chatbot_runnable.clear()
                                 gc.collect()
                                 st.success("🔄 Reloading application with new configuration...")
-                                time.sleep(2)
+                                time.sleep(1)
                                 st.rerun()
                     except Exception as e:
                         st.error(f"Error loading .env file: {e}")

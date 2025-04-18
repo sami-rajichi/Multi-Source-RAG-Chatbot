@@ -1,8 +1,12 @@
 import logging
+import os
+from dotenv import load_dotenv
 try:
-    from config import WEB_SEARCH_PROVIDER, TAVILY_API_KEY
+    from config import WEB_SEARCH_PROVIDER
 except ImportError:
-    from .config import DATA_PATH, CHROMA_PATH, EMBEDDING_MODEL_NAME
+    from .config import WEB_SEARCH_PROVIDER
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,13 +16,13 @@ def get_web_search_tool(max_results=3):
     logging.info(f"Initializing web search tool: {WEB_SEARCH_PROVIDER}")
 
     if WEB_SEARCH_PROVIDER == "tavily":
-        if not TAVILY_API_KEY:
+        if not os.getenv("TAVILY_API_KEY"):
             raise ValueError("TAVILY_API_KEY not found in environment variables.")
         try:
             from langchain_community.tools.tavily_search import TavilySearchResults
             search_tool = TavilySearchResults(
                 max_results=max_results, 
-                tavily_api_key=TAVILY_API_KEY
+                tavily_api_key=os.getenv("TAVILY_API_KEY")
             )
             logging.info(f"Tavily search tool initialized with max_results={max_results}.")
             return search_tool
