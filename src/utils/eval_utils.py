@@ -1,5 +1,4 @@
 import time
-import uuid
 import pandas as pd
 import streamlit as st
 import os
@@ -8,7 +7,7 @@ from langsmith import Client
 from langchain.callbacks.tracers import LangChainTracer
 from langchain.schema.runnable.config import RunnableConfig
 
-REQUEST_DELAY = 3    # Seconds between requests to avoid rate limiting
+REQUEST_DELAY = 4    # Seconds between requests to avoid rate limiting
 
 def run_evaluation(chatbot_runnable, benchmark_df: pd.DataFrame, num_questions: int, selected_model: str) -> Optional[pd.DataFrame]:
     """Runs evaluation on a subset of benchmark questions."""

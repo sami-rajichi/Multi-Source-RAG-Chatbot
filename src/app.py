@@ -6,6 +6,7 @@ import gc
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+import atexit
 
 # Import utility functions
 from utils.env_utils import check_env_vars, clear_env_vars, create_env_template
@@ -72,6 +73,17 @@ def get_chatbot_runnable(_llm_model_name: str):
         st.error(f"Failed to initialize chatbot engine: {e}")
         return None
 
+def cleanup():
+    """Delete .env file when the app exits"""
+    if os.path.exists('./.env'):
+        try:
+            os.remove('./.env')
+            clear_env_vars()
+            get_chatbot_runnable.clear()
+            gc.collect()
+        except Exception as e:
+            st.error(f"Couldn't delete .env file: {e}")
+
 def delete_vectorstore():
     """Handle vectorstore deletion with cleanup."""
     if not os.path.exists(CHROMA_PATH):
@@ -80,10 +92,7 @@ def delete_vectorstore():
     
     try:
         # Clear caches and collect garbage
-        st.cache_data.clear()
-        st.cache_resource.clear()
         get_chatbot_runnable.clear()
-        st.session_state.clear()
         gc.collect()
         
         if force_delete_directory(CHROMA_PATH):
@@ -114,8 +123,12 @@ def rebuild_vectorstore_with_detailed_status():
                 try:
                     if os.path.exists(CHROMA_PATH):
                         status.write("⏳ Deleting existing vectorstore...")
-                        delete_vectorstore()
-                        status.write("✅ Existing vectorstore deleted.")
+                        if force_delete_directory(CHROMA_PATH):
+                            if 'vectorstore_checked' in st.session_state: 
+                                del st.session_state.vectorstore_checked
+                            status.write("✅ Existing vectorstore deleted.")
+                        else:
+                            st.error("❌ Failed to delete vectorstore. Please restart the app and try again.")
                         time.sleep(0.5)
 
                     status.write(f"⏳ Loading {total_files} documents...")
@@ -144,8 +157,6 @@ def rebuild_vectorstore_with_detailed_status():
                     
                     if 'vectorstore_checked' in st.session_state: 
                         del st.session_state.vectorstore_checked
-                    st.cache_data.clear()
-                    st.cache_resource.clear()
                     get_chatbot_runnable.clear()
                     gc.collect()
                     time.sleep(2)
@@ -201,7 +212,6 @@ def main():
                         os.remove('./.env')
                         time.sleep(1)
                         clear_env_vars()
-                        st.cache_data.clear()
                         time.sleep(1)
                         get_chatbot_runnable.clear()
                         gc.collect()
@@ -244,11 +254,8 @@ def main():
                                 time.sleep(1)
                                 
                                 # Clear all caches and reset app state
-                                st.cache_data.clear()
-                                st.cache_resource.clear()
                                 get_chatbot_runnable.clear()
                                 gc.collect()
-                                
                                 st.success("🔄 Reloading application with new configuration...")
                                 time.sleep(2)
                                 st.rerun()
@@ -486,4 +493,17 @@ def main():
             )
 
 if __name__ == "__main__":
-    main()
+    # Register cleanup function
+    atexit.register(cleanup)
+    
+    try:
+        main()
+    except Exception as e:
+        st.error(f'Problem occurred. App stopped. {e}')
+        # Force cleanup even on error
+        if os.path.exists('.env'):
+            try:
+                os.remove('.env')
+            except Exception as cleanup_error:
+                st.error(f"Cleanup failed: {cleanup_error}")
+        st.stop()

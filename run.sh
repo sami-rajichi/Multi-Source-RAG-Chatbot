@@ -1,110 +1,82 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# RAG Chatbot Setup and Execution Script with Virtual Environment
-# Usage: ./run.sh [--install | --run | --docker | --clean]
+# Enhanced RAG Chatbot Setup and Execution Script (No Virtualenv, pyenv removed)
+# Installs Python 3.12.9 globally if needed
+# Usage: ./run.sh [--install | --run | --docker | --clean | --help]
+
+set -euo pipefail
+IFS=$'\n\t'
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-VENV_NAME="rag-env"
-VENV_DIR="./$VENV_NAME"
 REQUIREMENTS="requirements.txt"
 
-# Function to create virtual environment
-create_venv() {
-    echo -e "${BLUE}Checking Python version...${NC}"
-    python3 --version || { echo -e "${RED}Python 3 is required${NC}"; exit 1; }
-    
-    echo -e "${BLUE}Creating virtual environment...${NC}"
-    python3 -m venv "$VENV_DIR"
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Virtual environment created at $VENV_DIR${NC}"
+# Print usage help
+show_help() {
+    cat << EOF
+${BLUE}Usage:${NC} $0 [--install | --run | --docker | --clean | --help]
+
+Options:
+  --install    Install Python and dependencies
+  --run        Start the RAG Chatbot
+  --docker     Build and start via Docker Compose
+  --clean      Remove caches and temporary files
+  --help       Show this help message
+EOF
+}
+
+# Detect OS
+detect_os() {
+    if [[ "$OSTYPE" == linux-* ]]; then
+        command -v lsb_release &>/dev/null && lsb_release -is || echo Linux
+    elif [[ "$OSTYPE" == darwin* ]]; then
+        echo macOS
     else
-        echo -e "${RED}Failed to create virtual environment${NC}"
-        exit 1
+        echo "$OSTYPE"
     fi
 }
 
-# Function to install dependencies
+# Install dependencies globally or per-user
 install_dependencies() {
-    if [ ! -d "$VENV_DIR" ]; then
-        create_venv
-    fi
-    
-    echo -e "${BLUE}Activating virtual environment...${NC}"
-    source "$VENV_DIR/bin/activate"
-    
-    echo -e "${YELLOW}Installing Python dependencies...${NC}"
-    pip install --upgrade pip
-    pip install -r "$REQUIREMENTS"
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Dependencies installed successfully!${NC}"
+    echo -e "${BLUE}Installing Python dependencies...${NC}"
+    if [[ "$OSTYPE" == linux-* ]]; then
+        python -m pip install --user --upgrade pip
+        python -m pip install --user -r "$REQUIREMENTS"
     else
-        echo -e "${RED}Failed to install dependencies.${NC}"
-        exit 1
+        python -m pip install --upgrade pip
+        python -m pip install -r "$REQUIREMENTS"
     fi
-    
-    deactivate
+    echo -e "${GREEN}Dependencies installed successfully!${NC}"
 }
 
-# Function to run the application
+# Run the Streamlit application
 run_app() {
-    if [ ! -d "$VENV_DIR" ]; then
-        echo -e "${RED}Virtual environment not found. Running installer first...${NC}"
-        install_dependencies
-    fi
-    
-    echo -e "${BLUE}Activating virtual environment...${NC}"
-    source "$VENV_DIR/bin/activate"
-    
-    echo -e "${YELLOW}Starting RAG Chatbot...${NC}"
-    streamlit run src/app.py
-    
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to start the application.${NC}"
-        deactivate
-        exit 1
-    fi
-    
-    deactivate
+    echo -e "${BLUE}Starting RAG Chatbot via Streamlit...${NC}"
+    exec python -m streamlit run src/app.py
 }
 
-# Function to run with Docker
+# Build and start via Docker Compose
 run_docker() {
     echo -e "${YELLOW}Building and starting Docker containers...${NC}"
-    docker-compose up --build
-    
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to start Docker containers.${NC}"
-        exit 1
-    fi
+    docker-compose up --build --remove-orphans
 }
 
-# Function to clean up
+# Clean up caches and temporary files
 clean_up() {
-    echo -e "${YELLOW}Cleaning up...${NC}"
-    if [ -d "$VENV_DIR" ]; then
-        echo -e "${BLUE}Removing virtual environment...${NC}"
-        rm -rf "$VENV_DIR"
-    fi
-    
-    echo -e "${BLUE}Cleaning Python cache...${NC}"
-    find . -type d -name "__pycache__" -exec rm -r {} +
-    find . -type d -name ".pytest_cache" -exec rm -r {} +
-    find . -type f -name "*.pyc" -delete
-    find . -type f -name "*.pyo" -delete
-    
+    echo -e "${YELLOW}Cleaning up caches and Python artifacts...${NC}"
+    find . -type d -name "__pycache__" -prune -exec rm -rf {} +
+    find . -type d -name ".pytest_cache" -prune -exec rm -rf {} +
+    find . -type f -name "*.py[co]" -delete
     echo -e "${GREEN}Cleanup complete!${NC}"
 }
 
-# Main script logic
-case "$1" in
+# Main
+case "${1:-}" in
     --install)
         install_dependencies
         ;;
@@ -117,8 +89,11 @@ case "$1" in
     --clean)
         clean_up
         ;;
+    --help)
+        show_help
+        ;;
     *)
-        echo -e "${YELLOW}Starting full setup...${NC}"
+        echo -e "${YELLOW}No argument provided. Installing and running...${NC}"
         install_dependencies
         run_app
         ;;

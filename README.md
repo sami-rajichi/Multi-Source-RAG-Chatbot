@@ -94,6 +94,11 @@ No setup needed to play with it:
 Pick your favorite method:
 
 ### 🚅 The Express Route (run.sh)
+Before using `run.sh`, I recommend you to:
+
+1. Use a **Virtual Environment**.
+2. Have **Python 3.12+** available on your machine.
+3. Have **Docker** installed if you tend to experiment with `--docker` option.
 ```
 ./run.sh [option]
 ```
@@ -103,6 +108,7 @@ Options:
 - `--run`: Launch already-configured app  
 - `--docker`: Containerized experience  
 - `--clean`: Nuclear option (wipes venv)  
+- `--help`: Show help message
 
 ### 🏗️ Manual Setup
 For those who like control:
