@@ -218,7 +218,7 @@ def main():
                         time.sleep(2)
                         st.rerun()
             else:
-                st.markdown(f'<div class="env-var-status invalid">⚠️ Missing required variables: {", ".join(missing_vars)}</div>', unsafe_allow_html=True)
+                st.error(f'⚠️ Missing required variables: {", ".join(missing_vars)}')
             
             if missing_vars:
                 env_template = create_env_template()
@@ -234,9 +234,8 @@ def main():
                     try:
                         # Ensure it really is a .env
                         if not uploaded_env.name.endswith(".env"):
-                            st.error("🚫 Invalid file: please upload a `.env` file.")
                             time.sleep(3)
-                            st.rerun()
+                            st.error("🚫 Invalid file: please upload a `.env` file.")
                         else:
                             try:
                                 # Save to disk so load_dotenv can read it
@@ -259,8 +258,6 @@ def main():
                                 st.success("🔄 Reloading application with new configuration...")
                                 time.sleep(2)
                                 st.rerun()
-                        else:
-                            st.error(f"❌ Still missing variables: {", ".join(new_missing)}")
                     except Exception as e:
                         st.error(f"Error loading .env file: {e}")
             
